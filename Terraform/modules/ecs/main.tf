@@ -18,6 +18,8 @@ resource "aws_ecs_task_definition" "api-gateway-task" {
   requires_compatibilities = ["FARGATE"]
   network_mode = "awsvpc"
   execution_role_arn = var.execution_role_arn
+  memory = 512
+  cpu = 256
 
   container_definitions = jsonencode([
     {
@@ -58,17 +60,13 @@ resource "aws_ecs_service" "api-gateway-service" {
 
   network_configuration {
     security_groups = [var.ecs_sg]
-    subnets = [var.private_subnet_ids]
+    subnets = var.private_subnet_ids
     assign_public_ip = false
-  }
-
-  ordered_placement_strategy {
-    type  = "random"
   }
 
   load_balancer {
     target_group_arn = var.api_gateway_target_group
-    container_name   = "latest"
+    container_name   = local.name
     container_port   = var.container_port
   }
 }

@@ -3,15 +3,14 @@ resource "aws_lb" "ecs-v3-alb" {
   internal           = false
   load_balancer_type = "application"
   security_groups    = [var.ecs_sg_alb]
-  subnets            = [var.public_subnet_ids]
-
+  subnets            = var.public_subnet_ids
   enable_deletion_protection = false
 
-  access_logs {
-    bucket  = aws_s3_bucket.alb_logs.id
-    prefix  = "ecs-v3-alb"
-    enabled = true
-  }
+#   access_logs {
+#     bucket  = aws_s3_bucket.alb-logs-ecs-v3.id
+#     prefix  = "ecs-v3-alb"
+#     enabled = true
+#   }
 
   tags = {
     Name = "ecs-v3-alb"
@@ -79,7 +78,6 @@ resource "aws_lb_listener" "http" {
 
 resource "aws_lb_listener_rule" "api-gateway" {
   listener_arn = aws_lb_listener.http.arn
-  priority     = 10
 
   action {
     type             = "forward"
@@ -95,7 +93,6 @@ resource "aws_lb_listener_rule" "api-gateway" {
 
 resource "aws_lb_listener_rule" "dashboard-api" {
   listener_arn = aws_lb_listener.http.arn
-  priority     = 10
 
   action {
     type             = "forward"
@@ -109,11 +106,11 @@ resource "aws_lb_listener_rule" "dashboard-api" {
   }
 }
 
-resource "aws_s3_bucket" "alb_logs" {
-  bucket = "alb_logs"
+# resource "aws_s3_bucket" "alb-logs-ecs-v3" {
+#   bucket = "alb-logs-ecs-v3"
 
-  tags = {
-    Name = "ecs-v3-alb-logs-bucket"
-  }
-}
+#   tags = {
+#     Name = "ecs-v3-alb-logs-bucket"
+#   }
+# }
 

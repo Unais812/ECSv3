@@ -57,5 +57,5 @@ variable "ecs_sg" {
 
 variable "private_subnet_ids" {
   description = "ids of the private subnets"
-  type = string
+  type = list(string)
 }
