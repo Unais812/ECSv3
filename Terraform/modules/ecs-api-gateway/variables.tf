@@ -59,3 +59,8 @@ variable "private_subnet_ids" {
   description = "ids of the private subnets"
   type = list(string)
 }
+
+variable "ecs_cluster_id" {
+  description = "id of the cluster"
+  type = string
+}

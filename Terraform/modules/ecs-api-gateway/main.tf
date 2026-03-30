@@ -1,13 +1,3 @@
-resource "aws_ecs_cluster" "ecs-v3-cluster" {
-  name = "${local.name}-cluster"
-
-  setting {
-    name  = "containerInsights"
-    value = "enabled"
-  }
-}
-
-
 resource "aws_cloudwatch_log_group" "cw_log_group" {
   name              = var.log_group_name
   retention_in_days = var.log_days
@@ -53,7 +43,7 @@ resource "aws_ecs_task_definition" "api-gateway-task" {
 
 resource "aws_ecs_service" "api-gateway-service" {
   name            = "${local.name}-service"
-  cluster         = aws_ecs_cluster.ecs-v3-cluster.id
+  cluster         = var.ecs_cluster_id
   task_definition = aws_ecs_task_definition.api-gateway-task.arn
   desired_count   = 1
   launch_type = "FARGATE"
