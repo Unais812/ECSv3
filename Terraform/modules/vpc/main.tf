@@ -76,3 +76,11 @@ resource "aws_vpc_endpoint" "interface" {
   private_dns_enabled = true
 }
 
+# need to create vpc endpoint for s3 since ECR stores image layers in s3
+# has to be created seperately since its a "Gateway" endpoint type, uses route tables rather than interfaces
+resource "aws_vpc_endpoint" "s3" {
+  vpc_id            = aws_vpc.ecs-v3.id
+  service_name      = "com.amazonaws.${var.region}.s3"
+  vpc_endpoint_type = "Gateway"
+  route_table_ids = [aws_route_table.private-route-table.id]
+}
