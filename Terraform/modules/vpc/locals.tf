@@ -12,3 +12,14 @@ locals {
 locals {
     name = "ECSv3"
 }
+
+locals {
+  vpc_endpoints = {
+    ecr_api = "ecr.api"
+    ecr_dkr = "ecr.dkr"
+    logs = "logs"
+    sqs = "sqs"
+    secretsmanager = "secretsmanager"
+    sts = "sts"
+  }
+}

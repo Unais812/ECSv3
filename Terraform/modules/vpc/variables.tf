@@ -15,3 +15,8 @@ variable "public_cidr" {
   type = string
   default = "0.0.0.0/0"
 }
+
+variable "vpc_endpoint_sg" {
+  description = "sg for vpc endpoints"
+  type = string
+}
