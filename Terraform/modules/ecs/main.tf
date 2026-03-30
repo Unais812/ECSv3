@@ -54,6 +54,13 @@ resource "aws_ecs_service" "api-gateway-service" {
   cluster         = aws_ecs_cluster.ecs-v3-cluster.id
   task_definition = aws_ecs_task_definition.api-gateway-task.arn
   desired_count   = 1
+  launch_type = "FARGATE"
+
+  network_configuration {
+    security_groups = [var.ecs_sg]
+    subnets = [var.private_subnet_ids]
+    assign_public_ip = false
+  }
 
   ordered_placement_strategy {
     type  = "random"
