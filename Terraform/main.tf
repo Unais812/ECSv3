@@ -13,11 +13,14 @@ module "ecs" {
   execution_role_arn = module.iam.execution_role_arn
   api_gateway_target_group = module.alb.api_gateway_target_group
   ecs_sg = module.security-groups.ecs_sg
+  private_subnet_ids = module.vpc.private_subnet_ids
 }
 
 module "alb" {
   source = "./modules/alb"
   vpc_id = module.vpc.vpc_id
+  public_subnet_ids = module.vpc.public_subnet_ids
+  ecs_sg_alb = module.security-groups.ecs_sg_alb
 }
 
 module "security-groups" {
