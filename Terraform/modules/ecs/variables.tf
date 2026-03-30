@@ -49,3 +49,13 @@ variable "api_gateway_target_group" {
   description = "arn of the api gateway target group for alb"
   type = string
 }
+
+variable "ecs_sg" {
+  description = "security group for ecs service"
+  type = string
+}
+
+variable "private_subnet_ids" {
+  description = "ids of the private subnets"
+  type = string
+}
