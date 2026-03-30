@@ -5,3 +5,7 @@ output "ecs_sg" {
 output "ecs_sg_alb" {
   value = aws_security_group.ecs_sg_alb.id
 }
+
+output "vpc_endpoint_sg" {
+  value = aws_security_group.vpc_endpoint_sg.id
+}
