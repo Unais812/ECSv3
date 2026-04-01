@@ -23,3 +23,14 @@ locals {
     sts = "sts"
   }
 }
+
+locals {
+  service_discoveries = {
+    dashboard-api = "dashboard-api"
+    order-service = "order-service"
+    inventory-service = "inventory-service"
+    payment-service = "payment-service"
+    notification-service = "notification-service"
+    shipping-service = "shipping-service"
+  }
+}

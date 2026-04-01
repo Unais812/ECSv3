@@ -20,3 +20,10 @@ output "public_subnet_ids" {
     if local.subnets[k].public
   ]
 }
+
+output "service_discovery_arns" {
+  value = {
+    for name, service in aws_service_discovery_service.ecs_tasks_dns_discovery :
+    name => service.arn
+  }
+}

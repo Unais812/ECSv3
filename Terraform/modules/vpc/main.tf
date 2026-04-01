@@ -84,3 +84,27 @@ resource "aws_vpc_endpoint" "s3" {
   vpc_endpoint_type = "Gateway"
   route_table_ids = [aws_route_table.private-route-table.id]
 }
+
+# service discover yis required for the microservices to communicate via dns names
+# the api-gateway routes to the services via dns but the names cannot be resolved 
+resource "aws_service_discovery_private_dns_namespace" "ecs_discovery" {
+  name        = "ecs.local"
+  description = "this creates an internal DNS zone like so: '*.ecs.local' so now the ecs tasks can register dns entries e.g. dashboard-api.ecs.local -> task-ip"
+  vpc         = aws_vpc.ecs-v3.id
+}
+
+resource "aws_service_discovery_service" "ecs_tasks_dns_discovery" {
+  for_each = local.service_discoveries
+  name = each.value
+
+  dns_config {
+    namespace_id = aws_service_discovery_private_dns_namespace.ecs_discovery.id
+
+    dns_records {
+      ttl  = 10
+      type = "A"
+    }
+
+    routing_policy = "MULTIVALUE"
+  }
+}
