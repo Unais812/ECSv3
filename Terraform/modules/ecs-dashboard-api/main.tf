@@ -16,7 +16,7 @@ resource "aws_ecs_task_definition" "dashboard-api-task" {
       name      = local.name
       image     = var.image
       essential = true
-
+      
       portMappings = [
         {
           containerPort = var.container_port
@@ -33,6 +33,13 @@ resource "aws_ecs_task_definition" "dashboard-api-task" {
 
         }
        }
+
+      secrets = [
+        {
+            name = "DATABASE_URL"
+            valueFrom = var.database_url_secret_arn
+        }
+      ]
     },
   ])
 
@@ -54,9 +61,7 @@ resource "aws_ecs_service" "dashboard-api-service" {
     assign_public_ip = false
   }
 
-  load_balancer {
-    target_group_arn = var.dashboard_api_target_group
-    container_name   = local.name
-    container_port   = var.container_port
+  service_registries {
+    registry_arn = var.service_discovery_arn
   }
 }

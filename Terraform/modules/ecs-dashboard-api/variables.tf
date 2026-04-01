@@ -45,12 +45,7 @@ variable "execution_role_arn" {
   type = string
 }
 
-variable "dashboard_api_target_group" {
-  description = "arn of the api gateway target group for alb"
-  type = string
-}
-
-variable "ecs_sg" {
+variable "ecs_sg" { 
   description = "security group for ecs service"
   type = string
 }
@@ -62,5 +57,16 @@ variable "private_subnet_ids" {
 
 variable "ecs_cluster_id" {
   description = "id of the cluster"
+  type = string
+}
+
+variable "database_url_secret_arn" {
+  description = "database url"
+  type = string
+  sensitive = true
+}
+
+variable "service_discovery_arn" {
+  description = "arn of the service discovery"
   type = string
 }
