@@ -3,12 +3,6 @@ module "vpc" {
   vpc_endpoint_sg = module.security-groups.vpc_endpoint_sg
 }
 
-module "secret" {
-  source = "./modules/secrets"
-  db_password = var.db_password
-  jwt_secret  = var.jwt_secret
-}
-
 module "ecs-cluster" {
   source = "./modules/ecs-cluster"
 }
@@ -20,15 +14,37 @@ module "ecs-api-gatewway" {
   ecs_sg = module.security-groups.ecs_sg
   private_subnet_ids = module.vpc.private_subnet_ids
   ecs_cluster_id = module.ecs-cluster.ecs_cluster_id
+  jwt_secret_arn = module.secrets.jwt_secret_arn
 }
 
 module "ecs-dashboard-api" {
   source = "./modules/ecs-dashboard-api"
-  ecs_sg = module.security-groups.ecs_sg
   private_subnet_ids = module.vpc.private_subnet_ids
-  dashboard_api_target_group = module.alb.dashboard_api_target_group
   ecs_cluster_id = module.ecs-cluster.ecs_cluster_id
   execution_role_arn = module.iam.execution_role_arn
+  ecs_sg = module.security-groups.ecs_sg
+  database_url_secret_arn = module.secrets.database_url_arn
+  service_discovery_arn = module.vpc.service_discovery_arns["dashboard-api"]
+}
+
+module "ecs-inventory-service" {
+  source = "./modules/ecs-inventory-service"
+  database_url_secret_arn = module.secrets.database_url_arn
+  private_subnet_ids = module.vpc.private_subnet_ids
+  ecs_cluster_id = module.ecs-cluster.ecs_cluster_id
+  execution_role_arn = module.iam.execution_role_arn
+  ecs_sg = module.security-groups.ecs_sg
+  service_discovery_arn = module.vpc.service_discovery_arns["inventory-service"]
+}
+
+module "notification-service" {
+  source = "./modules/ecs-notification-service"
+ database_url_secret_arn = module.secrets.database_url_arn
+  private_subnet_ids = module.vpc.private_subnet_ids
+  ecs_cluster_id = module.ecs-cluster.ecs_cluster_id
+  execution_role_arn = module.iam.execution_role_arn
+  ecs_sg = module.security-groups.ecs_sg
+  service_discovery_arn = module.vpc.service_discovery_arns["notification-service"]
 }
 
 module "alb" {
@@ -45,4 +61,18 @@ module "security-groups" {
 
 module "iam" {
   source = "./modules/iam"
+}
+
+module "database" {
+  source = "./modules/database"
+  private_subnet_ids = module.vpc.private_subnet_ids
+  rds_sg = module.security-groups.rds_sg
+  db_password = var.db_password
+}
+
+module "secrets" {
+  source = "./modules/secrets"
+  rds_endpoint = module.database.rds_endpoint
+  db_password = var.db_password
+  jwt_secret = var.jwt_secret
 }
