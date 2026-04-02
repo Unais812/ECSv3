@@ -92,3 +92,21 @@ resource "aws_vpc_security_group_egress_rule" "allow_all_egress_traffic_rds" {
   ip_protocol       = "-1" # semantically equivalent to all ports
 }
 
+resource "aws_security_group" "elasticache_sg" {
+  name = "elasticache_sg"
+  vpc_id = var.vpc_id
+}
+
+resource "aws_vpc_security_group_ingress_rule" "elasticache-sg-ingress" {
+  security_group_id = aws_security_group.elasticache_sg.id
+  from_port         = 6379
+  ip_protocol       = "tcp"
+  to_port           = 6379
+  referenced_security_group_id = aws_security_group.ecs_sg.id
+}
+
+resource "aws_vpc_security_group_egress_rule" "allow_all_egress_traffic_elasticache" {
+  security_group_id = aws_security_group.elasticache_sg.id
+  cidr_ipv4         = var.allow_all_traffic_cidr
+  ip_protocol       = "-1" # semantically equivalent to all ports
+}
