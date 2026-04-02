@@ -39,12 +39,23 @@ module "ecs-inventory-service" {
 
 module "notification-service" {
   source = "./modules/ecs-notification-service"
- database_url_secret_arn = module.secrets.database_url_arn
+  database_url_secret_arn = module.secrets.database_url_arn
   private_subnet_ids = module.vpc.private_subnet_ids
   ecs_cluster_id = module.ecs-cluster.ecs_cluster_id
   execution_role_arn = module.iam.execution_role_arn
   ecs_sg = module.security-groups.ecs_sg
   service_discovery_arn = module.vpc.service_discovery_arns["notification-service"]
+}
+
+module "order-service" {
+  source = "./modules/ecs-order-service"
+  database_url_secret_arn = module.secrets.database_url_arn
+  private_subnet_ids = module.vpc.private_subnet_ids
+  ecs_cluster_id = module.ecs-cluster.ecs_cluster_id
+  execution_role_arn = module.iam.execution_role_arn
+  ecs_sg = module.security-groups.ecs_sg
+  service_discovery_arn = module.vpc.service_discovery_arns["order-service"]
+  task_role_arn = module.iam.order_service_task_role_arn
 }
 
 module "alb" {
@@ -61,6 +72,7 @@ module "security-groups" {
 
 module "iam" {
   source = "./modules/iam"
+  sqs_queue_arn = module.sqs.queue_arn
 }
 
 module "database" {
@@ -75,4 +87,8 @@ module "secrets" {
   rds_endpoint = module.database.rds_endpoint
   db_password = var.db_password
   jwt_secret = var.jwt_secret
+}
+
+module "sqs" {
+  source = "./modules/sqs"
 }
