@@ -48,6 +48,23 @@ resource "aws_vpc_security_group_ingress_rule" "ecs-sg-ingress" {
   to_port           = 8080
 }
 
+resource "aws_vpc_security_group_ingress_rule" "ecs-sg-ingress-8086" {
+  security_group_id = aws_security_group.ecs_sg.id
+  referenced_security_group_id = aws_security_group.ecs_sg_alb.id
+  from_port         = 8086
+  ip_protocol       = "tcp"
+  to_port           = 8086
+}
+
+# allow any ECS task to talk to any other ECS task on any port
+resource "aws_vpc_security_group_ingress_rule" "ecs-sg-internal" {
+  security_group_id            = aws_security_group.ecs_sg.id
+  referenced_security_group_id = aws_security_group.ecs_sg.id
+  from_port                    = 0
+  to_port                      = 65535
+  ip_protocol                  = "tcp"
+}
+
 resource "aws_vpc_security_group_egress_rule" "allow_all_traffic_ecs" {
   security_group_id = aws_security_group.ecs_sg.id
   cidr_ipv4         = var.allow_all_traffic_cidr
