@@ -14,7 +14,15 @@ module "ecs-api-gatewway" {
   ecs_sg = module.security-groups.ecs_sg
   private_subnet_ids = module.vpc.private_subnet_ids
   ecs_cluster_id = module.ecs-cluster.ecs_cluster_id
-  jwt_secret_arn = module.secrets.jwt_secret_arn
+  jwt_secret_arn = var.jwt_secret
+  inventory_service_url = module.vpc.service_discovery_urls["inventory-service"]
+  order_service_url = module.vpc.service_discovery_urls["order-service"]
+  payment_service_url = module.vpc.service_discovery_urls["payment-service"]
+  notification_service_url = module.vpc.service_discovery_urls["notification-service"]
+  shipping_service_url = module.vpc.service_discovery_urls["shipping-service"]
+  dashboard_service_url = module.vpc.service_discovery_urls["dashboard-api"]
+  elasticache_url = module.elasticache.elasticache_arn
+  sqs_queue_url = module.sqs.queue_url
 }
 
 module "ecs-dashboard-api" {
@@ -23,13 +31,13 @@ module "ecs-dashboard-api" {
   ecs_cluster_id = module.ecs-cluster.ecs_cluster_id
   execution_role_arn = module.iam.execution_role_arn
   ecs_sg = module.security-groups.ecs_sg
-  database_url_secret_arn = module.secrets.database_url_arn
+  database_url_secret_arn =  module.secrets.database_url_arn
   service_discovery_arn = module.vpc.service_discovery_arns["dashboard-api"]
 }
 
 module "ecs-inventory-service" {
   source = "./modules/ecs-inventory-service"
-  database_url_secret_arn = module.secrets.database_url_arn
+  database_url_secret_arn =  module.secrets.database_url_arn
   private_subnet_ids = module.vpc.private_subnet_ids
   ecs_cluster_id = module.ecs-cluster.ecs_cluster_id
   execution_role_arn = module.iam.execution_role_arn
@@ -39,7 +47,7 @@ module "ecs-inventory-service" {
 
 module "notification-service" {
   source = "./modules/ecs-notification-service"
-  database_url_secret_arn = module.secrets.database_url_arn
+  database_url_secret_arn =  module.secrets.database_url_arn
   private_subnet_ids = module.vpc.private_subnet_ids
   ecs_cluster_id = module.ecs-cluster.ecs_cluster_id
   execution_role_arn = module.iam.execution_role_arn
@@ -49,13 +57,65 @@ module "notification-service" {
 
 module "order-service" {
   source = "./modules/ecs-order-service"
-  database_url_secret_arn = module.secrets.database_url_arn
+  database_url_secret_arn =  module.secrets.database_url_arn
   private_subnet_ids = module.vpc.private_subnet_ids
   ecs_cluster_id = module.ecs-cluster.ecs_cluster_id
   execution_role_arn = module.iam.execution_role_arn
   ecs_sg = module.security-groups.ecs_sg
   service_discovery_arn = module.vpc.service_discovery_arns["order-service"]
   task_role_arn = module.iam.order_service_task_role_arn
+  sqs_queue_url = module.sqs.queue_url
+
+}
+
+module "payment-service" {
+  source = "./modules/ecs-payment-service"
+  database_url_secret_arn = module.secrets.database_url_arn
+  private_subnet_ids = module.vpc.private_subnet_ids
+  ecs_cluster_id = module.ecs-cluster.ecs_cluster_id
+  execution_role_arn = module.iam.execution_role_arn
+  ecs_sg = module.security-groups.ecs_sg
+  service_discovery_arn = module.vpc.service_discovery_arns["payment-service"]
+  task_role_arn = module.iam.payment_service_task_role_arn
+  sqs_queue_url = module.sqs.queue_url
+
+}
+
+module "scheduler-service" {
+  source = "./modules/ecs-scheduler"
+  database_url_secret_arn = module.secrets.database_url_arn
+  private_subnet_ids = module.vpc.private_subnet_ids
+  ecs_cluster_id = module.ecs-cluster.ecs_cluster_id
+  execution_role_arn = module.iam.execution_role_arn
+  ecs_sg = module.security-groups.ecs_sg
+}
+
+module "shipping-service" {
+  source = "./modules/ecs-shipping-service"
+  database_url_secret_arn = module.secrets.database_url_arn
+  private_subnet_ids = module.vpc.private_subnet_ids
+  ecs_cluster_id = module.ecs-cluster.ecs_cluster_id
+  execution_role_arn = module.iam.execution_role_arn
+  ecs_sg = module.security-groups.ecs_sg
+  service_discovery_arn = module.vpc.service_discovery_arns["shipping-service"]
+  task_role_arn = module.iam.shipping_service_task_role_arn
+  sqs_queue_url = module.sqs.queue_url
+
+}
+
+module "worker" {
+  source = "./modules/ecs-worker"
+  private_subnet_ids = module.vpc.private_subnet_ids
+  ecs_cluster_id = module.ecs-cluster.ecs_cluster_id
+  execution_role_arn = module.iam.execution_role_arn
+  ecs_sg = module.security-groups.ecs_sg
+  task_role_arn = module.iam.worker_task_role_arn
+  sqs_queue_url = module.sqs.queue_url
+  inventory_service_url = module.vpc.service_discovery_urls["inventory-service"]
+  order_service_url = module.vpc.service_discovery_urls["order-service"]
+  payment_service_url = module.vpc.service_discovery_urls["payment-service"]
+  notification_service_url = module.vpc.service_discovery_urls["notification-service"]
+  shipping_service_url = module.vpc.service_discovery_urls["shipping-service"]
 }
 
 module "alb" {
@@ -82,13 +142,19 @@ module "database" {
   db_password = var.db_password
 }
 
+module "sqs" {
+  source = "./modules/sqs"
+}
+
+module "elasticache" {
+  source = "./modules/elasticache"
+  private_subnet_ids = module.vpc.private_subnet_ids
+  redis_sg = module.security-groups.elasticache_sg
+}
+
 module "secrets" {
   source = "./modules/secrets"
   rds_endpoint = module.database.rds_endpoint
   db_password = var.db_password
   jwt_secret = var.jwt_secret
-}
-
-module "sqs" {
-  source = "./modules/sqs"
 }
