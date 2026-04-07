@@ -1,4 +1,3 @@
-# This tells RDS which subnets it should go in
 resource "aws_db_subnet_group" "rds" {
   name       = "ecs-v3-rds-subnet-group"
   subnet_ids = var.private_subnet_ids
