@@ -25,6 +25,17 @@ locals {
 }
 
 locals {
+  service_discovery_urls = {
+    "dashboard-api" = { name = "dashboard-api", namespace = "ecs.local", port = 8086 }
+    "order-service" = { name = "order-service", namespace = "ecs.local", port = 8081 }
+    "inventory-service" = { name = "inventory-service", namespace = "ecs.local", port = 8082 }
+    "payment-service" = { name = "payment-service", namespace = "ecs.local", port = 8083 }
+    "notification-service" = { name = "notification-service", namespace = "ecs.local", port = 8084 }
+    "shipping-service" = { name = "shipping-service", namespace = "ecs.local", port = 8085 }
+  }
+}
+
+locals {
   service_discoveries = {
     dashboard-api = "dashboard-api"
     order-service = "order-service"

@@ -27,3 +27,10 @@ output "service_discovery_arns" {
     name => service.arn
   }
 }
+
+output "service_discovery_urls" {
+  value = {
+    for name, config in local.service_discovery_urls :
+    name => "http://${config.name}.${config.namespace}:${config.port}"
+  }
+}
