@@ -10,7 +10,6 @@ terraform {
     bucket       = "ecs-project-v3-s3"
     key          = "terraform.tfstate"
     region       = "eu-north-1"
-    use_lockfile = true
     encrypt = true
   }
 }
