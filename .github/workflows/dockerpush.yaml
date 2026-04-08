@@ -1,0 +1,100 @@
+name: Build and push to ECR
+
+on:
+  workflow_dispatch:
+    inputs:
+      services:
+        description: 'Services to build and push (comma-separated, or "all")'
+        required: true
+        default: 'all'
+        type: string
+
+env:
+  AWS_REGION: ${{ secrets.AWS_REGION }}
+  AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+
+jobs:
+  prepare:
+    name: Prepare service matrix
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+
+    steps:
+      - name: Set matrix
+        id: set-matrix
+        run: |
+          ALL_SERVICES='["api-gateway","order-service","inventory-service","payment-service","notification-service","shipping-service","worker","scheduler","dashboard-api"]'
+
+          INPUT="${{ github.event.inputs.services }}"
+
+          if [ "$INPUT" = "all" ]; then
+            echo "matrix={\"service\":$ALL_SERVICES}" >> $GITHUB_OUTPUT
+          else
+            SELECTED=$(echo $INPUT | tr ',' '\n' | sed 's/ //g' | jq -R . | jq -s . | tr -d '\n')
+            echo "matrix={\"service\":$SELECTED}" >> $GITHUB_OUTPUT
+          fi
+
+  build-and-push:
+    name: Build and push ${{ matrix.service }}
+    runs-on: ubuntu-latest
+    needs: prepare
+
+    strategy:
+      matrix: ${{ fromJson(needs.prepare.outputs.matrix) }}
+
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.ACTION_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build Docker image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker buildx build \
+            --platform linux/amd64 \
+            --load \
+            -t $ECR_REGISTRY/${{ matrix.service }}:$IMAGE_TAG \
+            -t $ECR_REGISTRY/${{ matrix.service }}:latest \
+            ./services/${{ matrix.service }}
+
+      - name: Run Trivy vulnerability scan
+        uses: aquasecurity/trivy-action@v0.33.1
+        with:
+          image-ref: ${{ steps.login-ecr.outputs.registry }}/${{ matrix.service }}:${{ github.sha }}
+          format: table
+          exit-code: 1
+          ignore-unfixed: true
+          vuln-type: os,library
+          severity: CRITICAL
+
+      - name: Push image to ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker push $ECR_REGISTRY/${{ matrix.service }}:$IMAGE_TAG
+          docker push $ECR_REGISTRY/${{ matrix.service }}:latest
+
+      - name: Deploy to ECS
+        run: |
+          aws ecs update-service \
+            --cluster ecs-v3-cluster \
+            --service ${{ matrix.service }}-service \
+            --force-new-deployment \
+            --region ${{ env.AWS_REGION }}

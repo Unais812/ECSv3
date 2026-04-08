@@ -1,0 +1,39 @@
+name: Terraform apply 
+
+on:
+  workflow_dispatch: 
+    inputs:
+        terraform-apply:
+            description: 'Do you want to apply? Type "yes" to proceed'
+            type: string
+
+env:
+  AWS_REGION: ${{ secrets.AWS_REGION }}
+
+jobs:
+  terraform-check:
+    name: Terraform apply
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ./Terraform
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.ACTION_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.8.5
+      - name: Terraform init
+        run: terraform init
+      - name: Terraform apply
+        run: terraform apply -auto-approve
