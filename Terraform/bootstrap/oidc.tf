@@ -73,7 +73,26 @@ resource "aws_iam_role_policy" "github_actions_policy" {
         Effect   = "Allow"
         Action   = "iam:PassRole"
         Resource = "*"
-      }
+      },
+      {
+      Sid = "TerraformStateBucketAccess"
+      Effect = "Allow"
+      Action = [
+        "s3:ListBucket",
+        "s3:GetBucketLocation"
+      ]
+      Resource = "arn:aws:s3:::ecs-project-v3-s3"
+    },
+    {
+      Sid = "TerraformStateObjectAccess"
+      Effect = "Allow"
+      Action = [
+        "s3:GetObject",
+        "s3:PutObject",
+        "s3:DeleteObject"
+      ]
+      Resource = "arn:aws:s3:::ecs-project-v3-s3/*"
+    }
     ]
   })
 }
