@@ -1,16 +1,3 @@
-# resource "aws_secretsmanager_secret" "db_password" {
-#   name = "db_password"
-
-#   lifecycle {
-#     prevent_destroy = true
-#   }
-# }
-
-# resource "aws_secretsmanager_secret_version" "db" {
-#   secret_id     = aws_secretsmanager_secret.db_password.id
-#   secret_string = var.db_password
-# }
-
 resource "aws_secretsmanager_secret" "database_url" {
   name = "database_url"
 
