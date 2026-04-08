@@ -20,6 +20,10 @@ jobs:
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
 
+    permissions:
+      id-token: write
+      contents: read
+
     steps:
       - name: Set matrix
         id: set-matrix
