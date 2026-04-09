@@ -150,3 +150,38 @@ resource "aws_iam_role_policy" "shipping_service_sqs_policy" {
     ]
   })
 }
+
+resource "aws_iam_role" "dashboard_api_task_role" {
+  name               = "ecs-v3-dashboard-api-task-role"
+  assume_role_policy = data.aws_iam_policy_document.ecs_task_assume.json
+
+  tags = {
+    Name = "ecs-v3-dashboard-api-task-role"
+  }
+}
+
+resource "aws_iam_role_policy" "dashboard_api_policy" {
+  name = "ecs-v3-dashboard-api-task-policy"
+  role = aws_iam_role.dashboard_api_task_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "ECSServiceDiscovery"
+        Effect = "Allow"
+
+        Action = [
+          "ecs:DescribeServices",
+          "ecs:DescribeTasks",
+          "ecs:ListTasks",
+          "ecs:ListServices",
+          "ecs:DescribeTaskDefinition"
+        ]
+
+        Resource = "*"
+      }
+    ]
+  })
+}
+
