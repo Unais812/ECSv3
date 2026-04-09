@@ -77,7 +77,10 @@ jobs:
             -t $ECR_REGISTRY/${{ matrix.service }}:latest \
             ./services/${{ matrix.service }}
 
-      - name: Run Trivy vulnerability scan
+      - name: Install Trivy, latest version
+        uses: aquasecurity/setup-trivy@e07451d2e059ed86c2870430ea286b3a9e0bf241
+
+      - name: Run Trivy scan
         uses: aquasecurity/trivy-action@v0.33.1
         with:
           image-ref: ${{ steps.login-ecr.outputs.registry }}/${{ matrix.service }}:${{ github.sha }}
