@@ -54,15 +54,12 @@ func main() {
 		}
 	}
 
+
 	mux := http.NewServeMux()
-
-	api := http.NewServeMux()
-	api.HandleFunc("/healthz", handleHealth)
-	api.HandleFunc("/auth/login", handleLogin)
-	api.HandleFunc("/auth/register", handleRegister)
-	api.HandleFunc("/", handleProxy)
-
-	mux.Handle("/api/", http.StripPrefix("/api", api))
+	mux.HandleFunc("/healthz", handleHealth)
+	mux.HandleFunc("/auth/login", handleLogin)
+	mux.HandleFunc("/auth/register", handleRegister)
+	mux.HandleFunc("/", handleProxy)
 
 	port := getEnv("PORT", "8080")
 	server := &http.Server{
