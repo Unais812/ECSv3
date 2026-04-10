@@ -2,13 +2,13 @@
 FROM golang:1.23-alpine AS builder
 
 # Set working directory inside the container
-WORKDIR /build
+WORKDIR /app
 
 # Copy go.mod and go.sum files for dependency installation
 COPY go.mod go.sum ./
 
 # Cache dependencies separately so Docker doesn't re-download them on every build
-RUN go mod download 
+RUN go mod download
 
 # Copy the entire application source
 COPY . .
@@ -17,13 +17,13 @@ COPY . .
 RUN go build -o /app .
 
 # Final lightweight stage
-FROM gcr.io/distroless/static-debian12 
+FROM gcr.io/distroless/static-debian12
 
 # Copy the compiled binary from the builder stage
 COPY --from=builder /app /bin/app
 
 # Distroless image already has a user baked in 
-USER nonroot 
+USER nonroot
 
 EXPOSE 8080
 

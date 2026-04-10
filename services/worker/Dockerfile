@@ -2,7 +2,7 @@
 FROM golang:1.23-alpine AS builder
 
 # Set working directory inside the container
-WORKDIR /build
+WORKDIR /app
 
 # Copy go.mod and go.sum files for dependency installation
 COPY go.mod ./
