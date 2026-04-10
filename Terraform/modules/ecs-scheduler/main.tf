@@ -45,7 +45,7 @@ resource "aws_ecs_task_definition" "scheduler-task" {
 }
 
 resource "aws_ecs_service" "scheduler-service" {
-  name            = "${local.name}-service"
+  name            = "${local.name}"
   cluster         = var.ecs_cluster_id
   task_definition = aws_ecs_task_definition.scheduler-task.arn
   desired_count   = 1
