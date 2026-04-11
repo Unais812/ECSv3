@@ -17,7 +17,7 @@ COPY . .
 RUN go build -o /app .
 
 # Final lightweight stage
-FROM gcr.io/distroless/static-debian12 
+FROM golang:1.23-alpine
 
 # Copy the compiled binary from the builder stage
 COPY --from=builder /app /bin/app
