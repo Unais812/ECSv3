@@ -18,6 +18,13 @@ resource "aws_ecs_task_definition" "dashboard-api-task" {
       image     = var.image
       essential = true
       
+      environment = [
+        {
+            name = "DATABASE_URL"
+            value = "postgres://app:${var.db_password}@${var.rds_endpoint}:5432/orders"
+        }
+      ]
+    
       portMappings = [
         {
           containerPort = var.container_port
@@ -34,13 +41,6 @@ resource "aws_ecs_task_definition" "dashboard-api-task" {
 
         }
        }
-
-      secrets = [
-        {
-            name = "DATABASE_URL"
-            valueFrom = var.database_url_secret_arn
-        }
-      ]
     },
   ])
 
@@ -57,11 +57,6 @@ resource "aws_ecs_service" "dashboard-api-service" {
   launch_type = "FARGATE"
   enable_execute_command = true
 
-  lifecycle {
-    ignore_changes = [task_definition]
-  }
-
-
   network_configuration {
     security_groups = [var.ecs_sg]
     subnets = var.private_subnet_ids
@@ -72,4 +67,10 @@ resource "aws_ecs_service" "dashboard-api-service" {
     registry_arn = var.service_discovery_arn
   }
 
+
+  load_balancer {
+    target_group_arn = var.dashboard_api_target_group
+    container_name   = local.name
+    container_port   = var.container_port
+  }
 }
