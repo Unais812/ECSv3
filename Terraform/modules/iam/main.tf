@@ -54,17 +54,6 @@ resource "aws_iam_role_policy" "order_service_sqs_policy" {
     Version = "2012-10-17"
     Statement = [
       {
-        Sid = "SQSSendAccess"
-        Effect = "Allow"
-
-        Action = [
-          "sqs:SendMessage",
-          "sqs:GetQueueAttributes"
-        ]
-
-        Resource = var.sqs_queue_arn
-      },
-      {
         Sid = "ECSServiceDiscovery"
         Effect = "Allow"
 
@@ -89,9 +78,30 @@ resource "aws_iam_role_policy" "order_service_sqs_policy" {
         ]
 
         Resource = "*"
+      },
+      {
+        "Effect": "Allow",
+        "Action": [
+          "ssmmessages:CreateControlChannel",
+          "ssmmessages:CreateDataChannel",
+          "ssmmessages:OpenControlChannel",
+          "ssmmessages:OpenDataChannel"
+        ],
+        "Resource": "*"
       }
     ]
   })
+}
+
+resource "aws_iam_role_policy_attachment" "test-attach" {
+  role       = aws_iam_role.order_service_task_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSQSFullAccess"
+}
+
+
+resource "aws_iam_role_policy_attachment" "test-attach-sqs-dashboard" {
+  role       = aws_iam_role.dashboard_api_task_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSQSFullAccess"
 }
 
 resource "aws_iam_role" "payment_service_task_role" {
@@ -116,10 +126,13 @@ resource "aws_iam_role_policy" "payment_service_sqs_policy" {
 
         Action = [
           "sqs:SendMessage",
-          "sqs:GetQueueAttributes"
+          "sqs:GetQueueAttributes",
+          "sqs:ReceiveMessage",
+          "sqs:DeleteMessage"
+
         ]
 
-        Resource = var.sqs_queue_arn
+        Resource = "*"
       },
       {
         Sid = "ECSServiceDiscovery"
@@ -173,10 +186,12 @@ resource "aws_iam_role_policy" "shipping_service_policy" {
 
         Action = [
           "sqs:SendMessage",
-          "sqs:GetQueueAttributes"
+          "sqs:GetQueueAttributes",
+          "sqs:ReceiveMessage",
+          "sqs:DeleteMessage"
         ]
 
-        Resource = var.sqs_queue_arn
+        Resource = "*"
       },
       {
         Sid = "ECSServiceDiscovery"
@@ -230,10 +245,12 @@ resource "aws_iam_role_policy" "dashboard_api_policy" {
 
         Action = [
           "sqs:SendMessage",
-          "sqs:GetQueueAttributes"
+          "sqs:GetQueueAttributes",
+          "sqs:ReceiveMessage",
+          "sqs:DeleteMessage"
         ]
 
-        Resource = var.sqs_queue_arn
+        Resource = "*"
       },
       {
         Sid = "ECSServiceDiscovery"
@@ -344,10 +361,12 @@ resource "aws_iam_role_policy" "notification_service_policy" {
 
         Action = [
           "sqs:SendMessage",
-          "sqs:GetQueueAttributes"
+          "sqs:GetQueueAttributes",
+          "sqs:ReceiveMessage",
+          "sqs:DeleteMessage"
         ]
 
-        Resource = var.sqs_queue_arn
+        Resource = "*"
       },
       {
         Sid = "ECSServiceDiscovery"
@@ -401,10 +420,12 @@ resource "aws_iam_role_policy" "scheduler_service_policy" {
 
         Action = [
           "sqs:SendMessage",
-          "sqs:GetQueueAttributes"
+          "sqs:GetQueueAttributes",
+          "sqs:ReceiveMessage",
+          "sqs:DeleteMessage"
         ]
 
-        Resource = var.sqs_queue_arn
+        Resource = "*"
       },
       {
         Sid = "ECSServiceDiscovery"
@@ -458,10 +479,12 @@ resource "aws_iam_role_policy" "worker_service_policy" {
 
         Action = [
           "sqs:SendMessage",
-          "sqs:GetQueueAttributes"
+          "sqs:GetQueueAttributes",
+          "sqs:ReceiveMessage",
+          "sqs:DeleteMessage"
         ]
 
-        Resource = var.sqs_queue_arn
+        Resource = "*"
       },
       {
         Sid = "ECSServiceDiscovery"
@@ -515,10 +538,12 @@ resource "aws_iam_role_policy" "inventory_service_policy" {
 
         Action = [
           "sqs:SendMessage",
-          "sqs:GetQueueAttributes"
+          "sqs:GetQueueAttributes",
+          "sqs:ReceiveMessage",
+          "sqs:DeleteMessage"
         ]
 
-        Resource = var.sqs_queue_arn
+        Resource = "*"
       },
       {
         Sid = "ECSServiceDiscovery"
