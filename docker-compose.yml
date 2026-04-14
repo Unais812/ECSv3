@@ -88,6 +88,12 @@ services:
       PAYMENT_SERVICE_URL: http://payment-service:8083
       NOTIFICATION_SERVICE_URL: http://notification-service:8084
       SHIPPING_SERVICE_URL: http://shipping-service:8085
+    depends_on:
+      - order-service
+      - inventory-service
+      - payment-service
+      - notification-service
+      - shipping-service
 
   scheduler:
     build: ./services/scheduler
@@ -104,6 +110,13 @@ services:
       DATABASE_URL: postgres://app:localdev@postgres:5432/orders?sslmode=disable
     depends_on:
       - postgres
+
+  localstack:
+    image: localstack/localstack
+    ports:
+    - "4566:4566"
+    environment:
+    - SERVICES=sqs
 
 volumes:
   pgdata:
