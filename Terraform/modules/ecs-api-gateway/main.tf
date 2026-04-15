@@ -65,13 +65,6 @@ resource "aws_ecs_task_definition" "api-gateway-task" {
 
         }
        }
-
-      secrets = [
-        {
-            name = "JWT_SECRET"
-            valueFrom = var.jwt_secret_arn
-        }
-      ]
     },
   ])
 
@@ -95,6 +88,10 @@ resource "aws_ecs_service" "api-gateway-service" {
     security_groups = [var.ecs_sg]
     subnets = var.private_subnet_ids
     assign_public_ip = false
+  }
+
+  service_registries {
+    registry_arn = var.service_discovery_arn
   }
 
   load_balancer {
