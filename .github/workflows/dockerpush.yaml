@@ -94,11 +94,3 @@ jobs:
           IMAGE_TAG: ${{ github.sha }}
         run: |
           docker push $ECR_REGISTRY/${{ matrix.service }}:latest
-
-      - name: Deploy to ECS
-        run: |
-          aws ecs update-service \
-            --cluster ecs-v3-cluster \
-            --service ${{ matrix.service }}-service \
-            --force-new-deployment \
-            --region ${{ env.AWS_REGION }}
