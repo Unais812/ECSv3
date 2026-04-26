@@ -9,8 +9,11 @@ import (
 	"os"
 	"strings"
 	"time"
-
+	"context"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	_ "github.com/lib/pq"
+	
 )
 
 var db *sql.DB
@@ -350,8 +353,29 @@ func publishEvent(eventType string, payload map[string]interface{}) {
 		"timestamp": time.Now().UTC().Format(time.RFC3339),
 	}
 	data, _ := json.Marshal(event)
-	log.Printf("Event -> SQS: %s", string(data))
-	// Students implement actual SQS SendMessage here
+	
+	// Create AWS config and SQS client
+	cfg, err := config.LoadDefaultConfig(context.Background())
+	if err != nil {
+		log.Printf("Failed to load AWS config: %v", err)
+		return
+	}
+	
+	sqsClient := sqs.NewFromConfig(cfg)
+	
+	// Send message to SQS
+	messageBody := string(data)
+	_, err = sqsClient.SendMessage(context.Background(), &sqs.SendMessageInput{
+		QueueUrl:    &sqsQueue,
+		MessageBody: &messageBody,
+	})
+	
+	if err != nil {
+		log.Printf("Failed to send SQS message: %v", err)
+		return
+	}
+	
+	log.Printf("Event -> SQS: %s", messageBody)
 }
 
 func httpError(w http.ResponseWriter, msg string, code int) {
@@ -377,3 +401,42 @@ func waitForDB() {
 	}
 	log.Fatal("Database not ready after 30s")
 }
+
+
+// func publishEvent(eventType string, payload map[string]interface{}) {
+// 	sqsQueue := os.Getenv("SQS_QUEUE_URL")
+// 	if sqsQueue == "" {
+// 		log.Printf("Event (no SQS): %s %v", eventType, payload)
+// 		return
+// 	}
+
+// 	event := map[string]interface{}{
+// 		"type":      eventType,
+// 		"payload":   payload,
+// 		"timestamp": time.Now().UTC().Format(time.RFC3339),
+// 	}
+// 	data, _ := json.Marshal(event)
+	
+// 	// Create AWS config and SQS client
+// 	cfg, err := config.LoadDefaultConfig(context.Background())
+// 	if err != nil {
+// 		log.Printf("Failed to load AWS config: %v", err)
+// 		return
+// 	}
+	
+// 	sqsClient := sqs.NewFromConfig(cfg)
+	
+// 	// Send message to SQS
+// 	messageBody := string(data)
+// 	_, err = sqsClient.SendMessage(context.Background(), &sqs.SendMessageInput{
+// 		QueueUrl:    &sqsQueue,
+// 		MessageBody: &messageBody,
+// 	})
+	
+// 	if err != nil {
+// 		log.Printf("Failed to send SQS message: %v", err)
+// 		return
+// 	}
+// 	///////////////////////////////////////////
+// 	log.Printf("Event -> SQS: %s", messageBody)
+// }

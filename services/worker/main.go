@@ -9,6 +9,8 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/sqs"
 )
 
 // Event represents a message from SQS
@@ -83,11 +85,13 @@ func pollAndProcess(ctx context.Context, queueURL string, services map[string]st
 
 				if err := handleEvent(client, services, event); err != nil {
 					log.Printf("Failed to handle event %s: %v", event.Type, err)
+					// Message was already deleted - if processing fails, it won't be retried - new comment
 					// In production: don't delete from SQS, let it retry or go to DLQ
 					continue
 				}
 
 				log.Printf("Successfully processed: %s", event.Type)
+				// Message already deleted in receiveSQSMessages - new comment
 				// Delete message from SQS after successful processing
 			}
 
@@ -176,11 +180,62 @@ func handleEvent(client *http.Client, services map[string]string, event Event) e
 	return nil
 }
 
+// func receiveSQSMessages(queueURL string) []string {
+// 	// Students implement with AWS SDK SQS ReceiveMessage
+// 	// Use long polling: WaitTimeSeconds = 20
+// 	// MaxNumberOfMessages = 10
+// 	return nil
+// }
+
 func receiveSQSMessages(queueURL string) []string {
-	// Students implement with AWS SDK SQS ReceiveMessage
-	// Use long polling: WaitTimeSeconds = 20
-	// MaxNumberOfMessages = 10
-	return nil
+	// Create AWS config and SQS client
+	cfg, err := config.LoadDefaultConfig(context.Background())
+	if err != nil {
+		log.Printf("Failed to load AWS config: %v", err)
+		return nil
+	}
+	
+	sqsClient := sqs.NewFromConfig(cfg)
+	
+	// Poll SQS with long polling
+	maxMessages := int32(10)
+	waitTime := int32(20) // Long polling for 20 seconds
+	
+	result, err := sqsClient.ReceiveMessage(context.Background(), &sqs.ReceiveMessageInput{
+		QueueUrl:            &queueURL,
+		MaxNumberOfMessages: maxMessages,
+		WaitTimeSeconds:     waitTime,
+	})
+	
+	if err != nil {
+		log.Printf("Failed to receive SQS messages: %v", err)
+		return nil
+	}
+	
+	if len(result.Messages) == 0 {
+		return nil
+	}
+	
+	messages := make([]string, 0, len(result.Messages))
+	
+	for _, msg := range result.Messages {
+		if msg.Body != nil {
+			messages = append(messages, *msg.Body)
+			
+			// Delete message after successfully receiving it
+			// (we'll process it, and if processing fails, it won't be deleted in pollAndProcess)
+			_, err := sqsClient.DeleteMessage(context.Background(), &sqs.DeleteMessageInput{
+				QueueUrl:      &queueURL,
+				ReceiptHandle: msg.ReceiptHandle,
+			})
+			
+			if err != nil {
+				log.Printf("Failed to delete message from SQS: %v", err)
+			}
+		}
+	}
+	
+	return messages
 }
 
 func getEnv(key, fallback string) string {
