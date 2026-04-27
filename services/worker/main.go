@@ -170,9 +170,15 @@ func handleEvent(client *http.Client, services map[string]string, event Event) e
 		// 3. Send confirmation notification
 		log.Printf("  -> Sending order confirmation for %d", orderID)
 		notificationPayload := map[string]interface{}{
-			"template": "order_confirmed",
-			"order_id": orderID,
-			"email":    customerID, // customer_id is the email
+			"recipient": customerID,
+			"channel":   "email",
+			"template":  "order_confirmed",
+			"data": map[string]interface{}{
+				"OrderID":      orderID,
+				"CustomerName": "Customer",
+				"Total":        total,
+				"Currency":     currency,
+			},
 		}
 		makeHTTPCall(client, services["notification"], "/send", notificationPayload)
 
@@ -197,11 +203,10 @@ func handleEvent(client *http.Client, services map[string]string, event Event) e
 			log.Printf("  -> Creating shipment for order %d", orderID)
 			
 			// For now, create shipment with minimal required fields
-			// In production, you'd fetch the full order details first
 			shipmentPayload := map[string]interface{}{
 				"order_id":       orderID,
 				"carrier":        "DHL",
-				"recipient_name": "Customer", // Would come from order details
+				"recipient_name": "Customer",
 				"address_line1":  "123 Main St",
 				"city":           "London",
 				"postal_code":    "SW1A 1AA",
@@ -216,19 +221,25 @@ func handleEvent(client *http.Client, services map[string]string, event Event) e
 			// Notify customer
 			log.Printf("  -> Sending shipping notification for %d", orderID)
 			notificationPayload := map[string]interface{}{
-				"template":     "order_shipped",
-				"order_id":     orderID,
-				"email":        "customer@example.com", // Would come from order
-				"tracking_url": fmt.Sprintf("https://track.example.com/%d", orderID),
+				"recipient": "customer@example.com",
+				"channel":   "email",
+				"template":  "order_shipped",
+				"data": map[string]interface{}{
+					"OrderID":        orderID,
+					"TrackingNumber": fmt.Sprintf("TRACK-%d", orderID),
+				},
 			}
 			makeHTTPCall(client, services["notification"], "/send", notificationPayload)
 
 		case "delivered":
 			log.Printf("  -> Sending delivery notification for %d", orderID)
 			notificationPayload := map[string]interface{}{
-				"template": "order_delivered",
-				"order_id": orderID,
-				"email":    "customer@example.com", // Would come from order
+				"recipient": "customer@example.com",
+				"channel":   "email",
+				"template":  "order_delivered",
+				"data": map[string]interface{}{
+					"OrderID": orderID,
+				},
 			}
 			makeHTTPCall(client, services["notification"], "/send", notificationPayload)
 
@@ -274,9 +285,12 @@ func handleEvent(client *http.Client, services map[string]string, event Event) e
 		
 		// Send payment failed notification
 		notificationPayload := map[string]interface{}{
-			"template": "payment_failed",
-			"order_id": orderID,
-			"email":    "customer@example.com", // Would come from order
+			"recipient": "customer@example.com",
+			"channel":   "email",
+			"template":  "payment_failed",
+			"data": map[string]interface{}{
+				"OrderID": orderID,
+			},
 		}
 		makeHTTPCall(client, services["notification"], "/send", notificationPayload)
 
@@ -306,9 +320,12 @@ func handleEvent(client *http.Client, services map[string]string, event Event) e
 		
 		// Send delivery notification
 		notificationPayload := map[string]interface{}{
-			"template": "order_delivered",
-			"order_id": orderID,
-			"email":    "customer@example.com",
+			"recipient": "customer@example.com",
+			"channel":   "email",
+			"template":  "order_delivered",
+			"data": map[string]interface{}{
+				"OrderID": orderID,
+			},
 		}
 		makeHTTPCall(client, services["notification"], "/send", notificationPayload)
 
