@@ -17,7 +17,6 @@ resource "aws_ecs_task_definition" "dashboard-api-task" {
       name      = local.name
       image     = var.image
       essential = true
-      
       environment = [
         {
             name = "DATABASE_URL"

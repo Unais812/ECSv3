@@ -14,6 +14,12 @@ resource "aws_ecs_task_definition" "api-gateway-task" {
 
   container_definitions = jsonencode([
     {
+      health_check = {
+        path = "/healthz"
+        interval = 5
+        timeout = 5
+      }
+
       name      = local.name
       image     = var.image
       essential = true
@@ -22,6 +28,7 @@ resource "aws_ecs_task_definition" "api-gateway-task" {
         {
           containerPort = var.container_port
           hostPort      = var.host_port
+          protocol      = "tcp"
         }
       ]
 
@@ -65,6 +72,8 @@ resource "aws_ecs_task_definition" "api-gateway-task" {
 
         }
        }
+
+
     },
   ])
 
