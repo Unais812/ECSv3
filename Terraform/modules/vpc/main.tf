@@ -36,7 +36,7 @@ resource "aws_route_table" "public-route-table" {
     cidr_block = var.public_cidr
     gateway_id = aws_internet_gateway.igw.id
   }
-  
+
   tags = {
     Name = "${local.name}-public-route-table"
   }
@@ -62,7 +62,7 @@ resource "aws_route_table_association" "private" {
   subnet_id = aws_subnet.subnets[each.key].id # loops through each key in the locals block to associate each subnet, the for_each block already identified which subnets to use
 }
 
-resource "aws_vpc_endpoint" "interface" {
+resource "aws_vpc_endpoint" "Interface" {
   for_each = local.vpc_endpoints
   vpc_id            = aws_vpc.ecs-v3.id
   service_name      = "com.amazonaws.${var.region}.${each.value}"
@@ -85,7 +85,7 @@ resource "aws_vpc_endpoint" "s3" {
   route_table_ids = [aws_route_table.private-route-table.id]
 }
 
-# service discover yis required for the microservices to communicate via dns names
+# service discovery is required for the microservices to communicate via dns names
 # the api-gateway routes to the services via dns but the names cannot be resolved 
 resource "aws_service_discovery_private_dns_namespace" "ecs_discovery" {
   name        = "ecs.local"
@@ -98,7 +98,6 @@ resource "aws_service_discovery_service" "ecs_tasks_dns_discovery" {
   name = each.value
 
   dns_config {
-
     namespace_id = aws_service_discovery_private_dns_namespace.ecs_discovery.id
 
     dns_records {
