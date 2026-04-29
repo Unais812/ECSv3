@@ -61,8 +61,7 @@ resource "aws_lb_listener_rule" "dashboard-ui" {
         "/",
         "/dashboard",
         "/dashboard/*",
-        "/static/*",
-        "/assets/*"
+        "/healthz"
       ]
     }
   }
