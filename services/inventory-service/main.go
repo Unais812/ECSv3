@@ -91,8 +91,7 @@ func main() {
 	mux.HandleFunc("/reserve", handleReserve)
 	mux.HandleFunc("/release", handleRelease)
 	mux.HandleFunc("/low-stock", handleLowStock)
-	http.Handle("/metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{}))
-	http.ListenAndServe(":2112", nil)
+	mux.Handle("/metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{}))
 
 	port := getEnv("PORT", "8082")
 	log.Printf("Inventory service listening on :%s", port)

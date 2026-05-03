@@ -72,8 +72,7 @@ func main() {
 	mux.HandleFunc("/shipments/", handleShipment)
 	mux.HandleFunc("/track/", handleTrack)
 	mux.HandleFunc("/webhook", handleCarrierWebhook)
-	http.Handle("/metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{}))
-	http.ListenAndServe(":2112", nil)
+	mux.Handle("/metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{}))
 
 
 	port := getEnv("PORT", "8085")

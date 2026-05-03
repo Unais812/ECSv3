@@ -73,9 +73,7 @@ func main() {
 	mux.HandleFunc("/refund", handleRefund)
 	mux.HandleFunc("/ledger", handleLedger)
 	mux.HandleFunc("/balance/", handleBalance)
-	http.Handle("/metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{}))
-	http.ListenAndServe(":2112", nil)
-
+	mux.Handle("/metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{}))
 	port := getEnv("PORT", "8083")
 	log.Printf("Payment service listening on :%s", port)
 	log.Fatal(http.ListenAndServe(":"+port, mux))

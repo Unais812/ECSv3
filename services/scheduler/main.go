@@ -84,6 +84,7 @@ func main() {
 
 	http.Handle("/metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{}))
 	http.ListenAndServe(":2112", nil)
+	
 
 	// Graceful shutdown
 	sigChan := make(chan os.Signal, 1)

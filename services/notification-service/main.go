@@ -65,8 +65,7 @@ func main() {
 	mux.HandleFunc("/send", handleSend)
 	mux.HandleFunc("/history", handleHistory)
 	mux.HandleFunc("/templates", handleTemplates)
-	http.Handle("/metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{}))
-	http.ListenAndServe(":2112", nil)
+	mux.Handle("/metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{}))
 
 	port := getEnv("PORT", "8084")
 	log.Printf("Notification service listening on :%s", port)

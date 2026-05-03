@@ -72,8 +72,7 @@ func main() {
 	mux.HandleFunc("/dashboard/revenue", handleRevenue)
 	mux.HandleFunc("/dashboard/inventory/alerts", handleInventoryAlerts)
 	mux.HandleFunc("/dashboard/shipping/overview", handleShippingOverview)
-	http.Handle("/metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{}))
-	http.ListenAndServe(":2112", nil)
+	mux.Handle("/metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{}))
 
 	staticFS, _ := fs.Sub(staticFiles, "static")
 	mux.Handle("/", http.FileServer(http.FS(staticFS)))
