@@ -44,7 +44,7 @@ func main() {
 		"payment":      getEnv("PAYMENT_SERVICE_URL", "http://payment-service.ecs.local:8083"),
 		"notification": getEnv("NOTIFICATION_SERVICE_URL", "http://notification-service.ecs.local:8084"),
 		"shipping":     getEnv("SHIPPING_SERVICE_URL", "http://shipping-service.ecs.local:8085"),
-		"order":        getEnv("ORDER_SERVICE_URL", "http://order-service:.ecs.local8081"),
+		"order":        getEnv("ORDER_SERVICE_URL", "http://order-service.ecs.local:8081"),
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -71,8 +71,18 @@ func main() {
 		cancel()
 	}()
 
-	http.Handle("/metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{}))
-	http.ListenAndServe(":2112", nil)
+	// function to start metrics server
+
+	go func() {
+	mux := http.NewServeMux()
+	mux.Handle("/metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{}))
+
+	log.Println("Metrics endpoint listening on :2112")
+
+	if err := http.ListenAndServe(":2112", mux); err != nil {
+		log.Fatalf("metrics server failed: %v", err)
+	}
+	}()
 
 	log.Println("Worker started, polling SQS for events...")
 	pollAndProcess(ctx, sqsQueue, services)
