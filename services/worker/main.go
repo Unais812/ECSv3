@@ -1,22 +1,23 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"bytes"
-	"fmt"
-	"io"
 )
 
 // Event represents a message from SQS
@@ -40,11 +41,11 @@ func main() {
 
 	// Internal service URLs for event-driven calls
 	services := map[string]string{
-		"inventory":    getEnv("INVENTORY_SERVICE_URL", "http://inventory-service.ecs.local:8082"),
-		"payment":      getEnv("PAYMENT_SERVICE_URL", "http://payment-service.ecs.local:8083"),
-		"notification": getEnv("NOTIFICATION_SERVICE_URL", "http://notification-service.ecs.local:8084"),
-		"shipping":     getEnv("SHIPPING_SERVICE_URL", "http://shipping-service.ecs.local:8085"),
-		"order":        getEnv("ORDER_SERVICE_URL", "http://order-service.ecs.local:8081"),
+		"inventory":    getEnv("INVENTORY_SERVICE_URL", "http://inventory-service.ecs.internal:8082"),
+		"payment":      getEnv("PAYMENT_SERVICE_URL", "http://payment-service.ecs.internal:8083"),
+		"notification": getEnv("NOTIFICATION_SERVICE_URL", "http://notification-service.ecs.internal:8084"),
+		"shipping":     getEnv("SHIPPING_SERVICE_URL", "http://shipping-service.ecs.internal:8085"),
+		"order":        getEnv("ORDER_SERVICE_URL", "http://order-service.ecs.internal:8081"),
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -74,14 +75,14 @@ func main() {
 	// function to start metrics server
 
 	go func() {
-	mux := http.NewServeMux()
-	mux.Handle("/metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{}))
+		mux := http.NewServeMux()
+		mux.Handle("/metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{}))
 
-	log.Println("Metrics endpoint listening on :2112")
+		log.Println("Metrics endpoint listening on :2112")
 
-	if err := http.ListenAndServe(":2112", mux); err != nil {
-		log.Fatalf("metrics server failed: %v", err)
-	}
+		if err := http.ListenAndServe(":2112", mux); err != nil {
+			log.Fatalf("metrics server failed: %v", err)
+		}
 	}()
 
 	log.Println("Worker started, polling SQS for events...")
@@ -140,7 +141,7 @@ func handleEvent(client *http.Client, services map[string]string, event Event) e
 
 		// Extract customer_id
 		customerID, _ := event.Payload["customer_id"].(string)
-		
+
 		// Extract items and total
 		items := event.Payload["items"]
 		total, _ := event.Payload["total"].(float64)
@@ -223,7 +224,7 @@ func handleEvent(client *http.Client, services map[string]string, event Event) e
 		case "processing":
 			// Create shipment - need to get order details first
 			log.Printf("  -> Creating shipment for order %d", orderID)
-			
+
 			// For now, create shipment with minimal required fields
 			shipmentPayload := map[string]interface{}{
 				"order_id":       orderID,
@@ -293,18 +294,18 @@ func handleEvent(client *http.Client, services map[string]string, event Event) e
 		orderIDFloat, _ := event.Payload["order_id"].(float64)
 		orderID := int(orderIDFloat)
 		log.Printf("  -> Payment failed, cancelling order %d", orderID)
-		
+
 		// Release inventory reservation
 		releasePayload := map[string]interface{}{"order_id": orderID}
 		makeHTTPCall(client, services["inventory"], "/release", releasePayload)
-		
+
 		// Update order status to cancelled
 		cancelPayload := map[string]interface{}{
 			"order_id":   orderID,
 			"new_status": "cancelled",
 		}
 		makeHTTPCall(client, services["order"], "/status", cancelPayload)
-		
+
 		// Send payment failed notification
 		notificationPayload := map[string]interface{}{
 			"recipient": "customer@example.com",
@@ -332,14 +333,14 @@ func handleEvent(client *http.Client, services map[string]string, event Event) e
 		orderIDFloat, _ := event.Payload["order_id"].(float64)
 		orderID := int(orderIDFloat)
 		log.Printf("  -> Shipment delivered, updating order %d", orderID)
-		
+
 		// Update order status to delivered
 		statusPayload := map[string]interface{}{
 			"order_id":   orderID,
 			"new_status": "delivered",
 		}
 		makeHTTPCall(client, services["order"], "/status", statusPayload)
-		
+
 		// Send delivery notification
 		notificationPayload := map[string]interface{}{
 			"recipient": "customer@example.com",
@@ -361,7 +362,7 @@ func handleEvent(client *http.Client, services map[string]string, event Event) e
 // Helper function to make HTTP POST calls to internal services
 func makeHTTPCall(client *http.Client, serviceURL, path string, payload map[string]interface{}) error {
 	url := serviceURL + path
-	
+
 	jsonData, err := json.Marshal(payload)
 	if err != nil {
 		return fmt.Errorf("failed to marshal payload: %w", err)
@@ -371,7 +372,7 @@ func makeHTTPCall(client *http.Client, serviceURL, path string, payload map[stri
 	if err != nil {
 		return fmt.Errorf("failed to create request: %w", err)
 	}
-	
+
 	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := client.Do(req)
@@ -396,47 +397,47 @@ func receiveSQSMessages(queueURL string) []string {
 		log.Printf("Failed to load AWS config: %v", err)
 		return nil
 	}
-	
+
 	sqsClient := sqs.NewFromConfig(cfg)
-	
+
 	// Poll SQS with long polling
 	maxMessages := int32(10)
 	waitTime := int32(20) // Long polling for 20 seconds
-	
+
 	result, err := sqsClient.ReceiveMessage(context.Background(), &sqs.ReceiveMessageInput{
 		QueueUrl:            &queueURL,
 		MaxNumberOfMessages: maxMessages,
 		WaitTimeSeconds:     waitTime,
 	})
-	
+
 	if err != nil {
 		log.Printf("Failed to receive SQS messages: %v", err)
 		return nil
 	}
-	
+
 	if len(result.Messages) == 0 {
 		return nil
 	}
-	
+
 	messages := make([]string, 0, len(result.Messages))
-	
+
 	for _, msg := range result.Messages {
 		if msg.Body != nil {
 			messages = append(messages, *msg.Body)
-			
+
 			// Delete message after successfully receiving it
 			// (we'll process it, and if processing fails, it won't be deleted in pollAndProcess)
 			_, err := sqsClient.DeleteMessage(context.Background(), &sqs.DeleteMessageInput{
 				QueueUrl:      &queueURL,
 				ReceiptHandle: msg.ReceiptHandle,
 			})
-			
+
 			if err != nil {
 				log.Printf("Failed to delete message from SQS: %v", err)
 			}
 		}
 	}
-	
+
 	return messages
 }
 

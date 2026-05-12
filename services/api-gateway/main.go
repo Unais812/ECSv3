@@ -14,11 +14,12 @@ import (
 	"sync"
 	"syscall"
 	"time"
+
+	"github.com/go-redis/redis/v8"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/go-redis/redis/v8"
-	"github.com/golang-jwt/jwt/v5"
 )
 
 var (
@@ -39,12 +40,12 @@ func main() {
 
 	// Service routes - internal service URLs
 	routes = map[string]string{
-		"/api/orders":        getEnv("ORDER_SERVICE_URL", "http://order-service.ecs.local:8081"),
-		"/api/inventory":     getEnv("INVENTORY_SERVICE_URL", "http://inventory-service.ecs.local:8082"),
-		"/api/payments":      getEnv("PAYMENT_SERVICE_URL", "http://payment-service.ecs.local:8083"),
-		"/api/notifications": getEnv("NOTIFICATION_SERVICE_URL", "http://notification-service.ecs.local:8084"),
-		"/api/shipping":      getEnv("SHIPPING_SERVICE_URL", "http://shipping-service.ecs.local:8085"),
-		"/api/dashboard":     getEnv("DASHBOARD_SERVICE_URL", "http://dashboard-api.ecs.local:8086"),
+		"/api/orders":        getEnv("ORDER_SERVICE_URL", "http://order-service.ecs.internal:8081"),
+		"/api/inventory":     getEnv("INVENTORY_SERVICE_URL", "http://inventory-service.ecs.internal:8082"),
+		"/api/payments":      getEnv("PAYMENT_SERVICE_URL", "http://payment-service.ecs.internal:8083"),
+		"/api/notifications": getEnv("NOTIFICATION_SERVICE_URL", "http://notification-service.ecs.internal:8084"),
+		"/api/shipping":      getEnv("SHIPPING_SERVICE_URL", "http://shipping-service.ecs.internal:8085"),
+		"/api/dashboard":     getEnv("DASHBOARD_SERVICE_URL", "http://dashboard-api.ecs.internal:8086"),
 	}
 
 	// Redis for rate limiting
@@ -62,14 +63,12 @@ func main() {
 		}
 	}
 
-
 	mux := http.NewServeMux()
 	mux.HandleFunc("/healthz", handleHealth)
 	mux.HandleFunc("/auth/login", handleLogin)
 	mux.HandleFunc("/auth/register", handleRegister)
 	mux.HandleFunc("/", handleProxy)
 	mux.Handle("/metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{}))
-
 
 	port := getEnv("PORT", "8080")
 	server := &http.Server{
@@ -111,10 +110,10 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 	// In production this would validate against a user database
 	// For this project, accept any email/password and return a JWT
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"sub":   req.Email,
-		"role":  "customer",
-		"exp":   time.Now().Add(24 * time.Hour).Unix(),
-		"iat":   time.Now().Unix(),
+		"sub":  req.Email,
+		"role": "customer",
+		"exp":  time.Now().Add(24 * time.Hour).Unix(),
+		"iat":  time.Now().Unix(),
 	})
 
 	tokenString, err := token.SignedString(jwtSecret)
@@ -296,5 +295,3 @@ func gracefulShutdown(server *http.Server) {
 		server.Shutdown(ctx)
 	})
 }
-
-
