@@ -88,8 +88,8 @@ resource "aws_vpc_endpoint" "s3" {
 # service discovery is required for the microservices to communicate via dns names
 # the api-gateway routes to the services via dns but the names cannot be resolved 
 resource "aws_service_discovery_private_dns_namespace" "ecs_discovery" {
-  name        = "ecs.local"
-  description = "this creates an internal DNS zone like so: '*.ecs.local' so now the ecs tasks can register dns entries e.g. dashboard-api.ecs.local -> task-ip"
+  name        = "ecs.internal"
+  description = "this creates an internal DNS zone like so: '*.ecs.internal' so now the ecs tasks can register dns entries e.g. dashboard-api.ecs.internal -> task-ip"
   vpc         = aws_vpc.ecs-v3.id
 }
 

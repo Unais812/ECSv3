@@ -34,3 +34,7 @@ output "service_discovery_urls" {
     name => "http://${config.name}.${config.namespace}:${config.port}"
   }
 }
+
+output "igw_id" {
+  value = aws_internet_gateway.igw.id
+}
