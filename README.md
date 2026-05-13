@@ -8,7 +8,8 @@ Built a production-grade, event-driven order fulfillment platform on AWS using a
 - SQS for message based workload
 - Prometheus, Grafana, YACE for a complete centralised observability stack 
 - Pipeline ownership of deployments to prevent config drifts 
-- OIDC using web tokens rather than providing access keys mitigating security risks implementing security best practices 
+- OIDC using web tokens rather than providing access keys mitigating security risks implementing security best practices
+- AWS Cloud Map for internal service discovery and microservice communication
 
 ## Architecture Diagram
 
@@ -62,3 +63,21 @@ I honestly felt like giving up on this thinking that i would never understand it
 Looking back, provisioning the infrastructure was actually the easier part, the real challenge was understanding how the entire system works end to end and making design decisions that affected multiple services which took far longer than writing Terraform 
 
 This project represents a huge learning journey for me, and I hope it reflects the serious effort that went into it, onto the next 🚀
+
+## Screenshots proof
+
+### SQS metrics
+
+<img width="1101" height="307" alt="SQS metrics proof" src="https://github.com/user-attachments/assets/1634c874-9479-485d-985c-e2be2c5bad26" />
+
+### Order platform on custom domain
+
+<img width="1512" height="903" alt="order platform on custom domain" src="https://github.com/user-attachments/assets/b5c4a52b-10df-48bb-89d6-de7448e5ce08" />
+
+<img width="1512" height="907" alt="notifs tab on order platform" src="https://github.com/user-attachments/assets/2a2fcd3d-bee6-4747-bd58-7d27f2d717c1" />
+
+### Grafana Metrics | ECS and Go
+
+<img width="1512" height="856" alt="ecsv3 metrics" src="https://github.com/user-attachments/assets/8dad7818-0206-4ba1-8b49-f7dc8b8737d5" />
+
+<img width="1510" height="856" alt="ecsv3 go metrics" src="https://github.com/user-attachments/assets/1b954613-22b6-4dac-940b-68cfbd351111" />
