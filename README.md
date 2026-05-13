@@ -1,5 +1,13 @@
 # order fulfillment platform
 
+## Contents
+- [Features](#features)
+- [Architecture Diagram](#architecture-diagram)
+- [System Design](#system-design)
+- [Issues/Solutions](#issues--solutions)
+- [Lessons Learnt](#lessons-learnt)
+- [The Journey](#the-journey)
+- [Screenshot proofs](#screenshots-proof)
 ## Overview 
 
 Built a production-grade, event-driven order fulfillment platform on AWS using a **microservices architecture** with **9** independently deployed services running on ECS Fargate. Designed and implemented the complete infrastructure stack with Terraform, CI/CD pipelines using GitHub Actions + **OIDC**. Architected cross-service communication with **SQS-based orchestration**, service discovery, **centralized observability**, and least-privilege IAM.
